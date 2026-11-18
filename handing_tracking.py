@@ -89,6 +89,51 @@ class Detector:
 
         return imagem
 
+    def encontrar_pontos(self, imagem, mao_num=0, desenho=True, cor=(255,0,255), raio=7, ponto_detectado=0):
+        """
+        Função responsável por encontrar a posição dos pontos da(s) mão(s).
+        :param imagem: Imagem capturada.
+        :param mao_num: Número da mão detectada.
+        :param desenho: Desenhar o ponto encontrado.
+        :param cor: Tupla com a cor do ponto (BGR).
+        :param raio: Raio do círculo do ponto.
+        :param ponto_detectado: Ponto a ser detectado
+        :return: Lista com os pontos detectados.
+        """
+
+        # Lista com os pontos detectados
+        lista_pontos = []
+
+        # Verificar se alguma não foi detectada
+        if self.resultado.multi_hand_landmarks:
+            # Obter os pontos da mão detectada, não de todas
+            mao = self.resultado.multi_hand_landmarks[mao_num]
+
+            # Obter as informações dos pontos
+            for id, ponto in enumerate(mao.landmark):
+                # Obter as dimensões da imagem capturada
+                altura, largura, _ = imagem.shape
+
+                # Transformar a posição do ponto de proporção para pixel
+                centro_x, centro_y = int(ponto.x * largura), int(ponto.y * altura)
+
+                # Adicionar os pontos da maõ detectada na lista
+                lista_pontos.append([id, centro_x, centro_y])
+
+                # Colocar um circulo em um ponto
+                if desenho:
+                    if id == ponto_detectado:
+                        cv2.circle(
+                            imagem, # Imagem da captura
+                            (centro_x, centro_y), # Centro do círculo,
+                            raio, # raio do circulo
+                            cor, # cor do circulo
+                            cv2.FILLED # espessura
+                        )
+            
+            return lista_pontos
+
+
     def fechar(self):
         # Liberar os recursos do MediaPipe
         self.maos.close()
@@ -124,6 +169,9 @@ def main():
 
         # Detectar as mãos
         imagem = detector.encontrar_maos(imagem)
+
+        # Lista com os pontos
+        lista_pontos = detector.encontrar_pontos(imagem=imagem, ponto_detectado=8)
 
         # Mostrar a imagem de captura
         cv2.imshow('Handing Tracking', imagem)
